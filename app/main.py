@@ -1,16 +1,45 @@
+from __future__ import annotations
+
 import logging
+from dataclasses import asdict
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+from sqlalchemy.orm import Session
+
+from .config import MAX_PAGES, TRUDVSEM_QUERY
+from .db import SessionLocal
+from .models import Vacancy
+from .providers.trudvsem import VacancyDTO, fetch_vacancies
+
+logger = logging.getLogger(__name__)
 
 
-def main() -> None:
-    # День 2: клиент HH API
-    # День 3: нормализация + сохранение в БД
-    logging.info("Заглушка точки входа — пока ничего не делает")
+def upsert_vacancies(
+        session: Session, items: list[VacancyDTO]) -> tuple[int, int]:
+    """Пишет вакансии в БД. Возвращает (создано, обновлено)."""
+    created = updated = 0
+    for dto in items:
+        obj = session.get(Vacancy, dto.hh_id)
+        if obj is None:
+            session.add(Vacancy(**asdict(dto)))
+            created += 1
+        else:
+            for field, value in asdict(dto).items():
+                setattr(obj, field, value)
+            updated += 1
+    session.commit()
+    return created, updated
+
+
+def run() -> None:
+    items = fetch_vacancies(TRUDVSEM_QUERY, MAX_PAGES)
+    with SessionLocal() as session:
+        created, updated = upsert_vacancies(session, items)
+    with_phone = sum(1 for dto in items if dto.has_phone)
+    logger.info("Итог: собрано %d, новых %d, обновлено %d, с телефоном %d",
+                len(items), created, updated, with_phone)
 
 
 if __name__ == "__main__":
-    main()
+    logging.basicConfig(level=logging.INFO,
+                        format="%(levelname)s %(name)s: %(message)s")
+    run()
