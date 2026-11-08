@@ -1,8 +1,8 @@
 import json
 import pathlib
 
-from app.providers.trudvsem import (
-    fetch_vacancies, normalize_vacancy, _parse_dt)
+from app.providers.base import parse_dt
+from app.providers.trudvsem import fetch_vacancies, normalize_vacancy
 
 FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "sample_response.json"
 
@@ -47,15 +47,15 @@ def test_missing_id_skipped() -> None:
 
 
 def test_date_parsing() -> None:
-    dt1 = _parse_dt("2026-11-03T07:13:04+0300")
+    dt1 = parse_dt("2026-11-03T07:13:04+0300")
     assert dt1 is not None
     assert dt1.isoformat() == "2026-11-03T07:13:04+03:00"
 
-    dt2 = _parse_dt("2025-08-08")  # assert dt2 is not None,не нужен для tzinfo
+    dt2 = parse_dt("2025-08-08")  # assert dt2 is not None,не нужен для tzinfo
     assert dt2 is not None and dt2.tzinfo is not None
 
-    assert _parse_dt(None) is None
-    assert _parse_dt("мусор") is None
+    assert parse_dt(None) is None
+    assert parse_dt("мусор") is None
 
 
 def test_fetch_stops_after_total(monkeypatch):

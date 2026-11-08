@@ -13,4 +13,5 @@ DATABASE_URL: str = _database_url  # mypy знает: здесь уже точн
 HH_QUERY = os.getenv("HH_QUERY", "продакт менеджер ИИ")
 TRUDVSEM_QUERY = os.getenv("TRUDVSEM_QUERY", "продакт менеджер")
 HH_AREA = int(os.getenv("HH_AREA", "113"))
+HH_API_TOKEN = os.getenv("HH_API_TOKEN", "")
 MAX_PAGES = int(os.getenv("MAX_PAGES", "5"))
