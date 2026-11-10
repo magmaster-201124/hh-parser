@@ -3,8 +3,13 @@ import logging
 
 import requests
 
-from .base import VacancyDTO, parse_dt
+from .base import parse_dt, SourceUnavailableError, VacancyDTO
 from app.config import HH_API_TOKEN
+
+BASE_URL = "https://api.hh.ru/vacancies"
+HEADERS: dict[str, str] = {"User-Agent": "Resumetto-parser/1.0 (test task)"}
+PAGE_LIMIT = 100
+REQUEST_TIMEOUT = 30
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +19,6 @@ def _headers() -> dict[str, str]:
     if HH_API_TOKEN:
         h["Authorization"] = f"Bearer {HH_API_TOKEN}"
     return h
-
-
-BASE_URL = "https://api.hh.ru/vacancies"
-HEADERS: dict[str, str] = {"User-Agent": "Resumetto-parser/1.0 (test task)"}
-PAGE_LIMIT = 100
-REQUEST_TIMEOUT = 30
 
 
 def normalize_hh(item: dict) -> VacancyDTO | None:
@@ -74,8 +73,10 @@ def fetch_hh(query: str, area: int, pages: int = 1) -> list[VacancyDTO]:
         except requests.HTTPError:
             if resp.status_code == 403:
                 logger.warning("hh отклонил запрос(403): нет токена приложения"
-                               " или он не активен — пропускаю источник")
-                return items  # собранное trudvsem не теряем
+                               " или он не активен")
+                raise SourceUnavailableError(
+                    "hh отклонил запрос (403): нет токена приложения "
+                    "или он не активен") from None
             raise
         data = resp.json()
         found = data.get("found", 0)

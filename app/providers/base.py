@@ -37,3 +37,7 @@ def parse_dt(value: str | None) -> datetime | None:
         return dt
     logger.warning("Не удалось разобрать дату: %r", value)
     return None
+
+
+class SourceUnavailableError(Exception):
+    """Источник данных недоступен (нет доступа, блокировка и т.п.)."""

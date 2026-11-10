@@ -1,4 +1,8 @@
-from app.providers.hh import normalize_hh
+import requests as requests_lib
+import pytest
+
+from app.providers.base import SourceUnavailableError
+from app.providers.hh import fetch_hh, normalize_hh
 
 ITEM = {
     "id": "123456789",
@@ -13,6 +17,16 @@ ITEM = {
     },
     "published_at": "2026-11-01T10:00:00+0300",
 }
+
+
+class ForbiddenResp:
+    status_code = 403
+
+    def raise_for_status(self) -> None:
+        raise requests_lib.HTTPError("403")
+
+    def json(self) -> dict:
+        return {}
 
 
 def test_normalize_hh_with_phone() -> None:
@@ -32,3 +46,9 @@ def test_normalize_hh_without_contacts() -> None:
     assert dto is not None
     assert dto.has_phone is False
     assert dto.phone is None
+
+
+def test_fetch_hh_403_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(requests_lib, "get", lambda *a, **kw: ForbiddenResp())
+    with pytest.raises(SourceUnavailableError):
+        fetch_hh("тест", 113, pages=1)

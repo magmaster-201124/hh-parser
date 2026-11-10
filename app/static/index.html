@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Resumetto</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; }
+    button { margin-right: 8px; padding: 8px 16px; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+    th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; font-size: 14px; }
+    #status { margin-top: 12px; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>Resumetto — вакансии с контактами</h1>
+  <button onclick="collect('trudvsem')">Собрать trudvsem</button>
+  <button onclick="collect('hh')">Собрать hh</button>
+  <button onclick="loadVacancies(true)">Показать вакансии с телефоном</button>
+  <div id="status"></div>
+  <table id="vacancies" hidden>
+    <thead><tr>
+      <th>Должность</th><th>Компания</th><th>Регион</th>
+      <th>Зарплата</th><th>Телефон</th><th>Контакт</th><th>Ссылка</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function collect(source) {
+      const resp = await fetch(`/api/collect/${source}`, { method: "POST" });
+      showStatus(await resp.json());
+      if (resp.ok) pollStatus(source);
+    }
+
+    async function pollStatus(source) {
+      const timer = setInterval(async () => {
+        const st = (await (await fetch("/api/status")).json())[source];
+        if (!st || st.state === "running") return;
+        clearInterval(timer);
+        const stats = st.state === "done"
+          ? `, собрано ${st.collected}, новых ${st.created}, обновлено ${st.updated}`
+        : "";
+        showStatus(`${source}: ${st.state}${st.reason ? ` — ${st.reason}` : ""}${stats}`);
+        if (st.state === "done") await loadVacancies();
+      }, 1500);
+    }
+
+
+    async function loadVacancies(hasPhone = false) {
+      const query = hasPhone ? "?has_phone=true" : "";
+      const rows = await (await fetch(`/api/vacancies${query}`)).json();
+      const tbody = document.querySelector("#vacancies tbody");
+      tbody.innerHTML = "";
+      for (const v of rows) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${v.title}</td><td>${v.company ?? ""}</td><td>${v.area ?? ""}</td>` +
+          `<td>${v.salary_from ?? "—"}…${v.salary_to ?? "—"} ${v.currency ?? ""}</td>` +
+          `<td>${v.phone ?? ""}</td><td>${v.contact_name ?? ""}</td>` +
+          `<td><a href="${v.url}">открыть</a></td>`;
+        tbody.appendChild(tr);
+      }
+      document.getElementById("vacancies").hidden = false;
+    }
+
+    function showStatus(text) {
+      document.getElementById("status").textContent = typeof text === "string" ? text : JSON.stringify(text);
+    }
+  </script>
+</body>
+</html>

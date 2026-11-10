@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from .config import HH_AREA, HH_QUERY, MAX_PAGES, TRUDVSEM_QUERY
 from .db import SessionLocal
 from .models import Vacancy
-from .providers.base import VacancyDTO
+from .providers.base import SourceUnavailableError, VacancyDTO
 from .providers.hh import fetch_hh
 from .providers.trudvsem import fetch_vacancies
 
@@ -32,8 +32,11 @@ def upsert_vacancies(
 
 
 def run() -> None:
-    items = (fetch_vacancies(TRUDVSEM_QUERY, MAX_PAGES)
-             + fetch_hh(HH_QUERY, HH_AREA, MAX_PAGES))
+    items = fetch_vacancies(TRUDVSEM_QUERY, MAX_PAGES)
+    try:
+        items += fetch_hh(HH_QUERY, HH_AREA, MAX_PAGES)
+    except SourceUnavailableError as exc:
+        logger.warning("Пропускаю источник hh: %s", exc)
     with SessionLocal() as session:
         created, updated = upsert_vacancies(session, items)
     with_phone = sum(1 for dto in items if dto.has_phone)

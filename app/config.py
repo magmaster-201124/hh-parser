@@ -4,11 +4,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_database_url = os.getenv("DATABASE_URL")
-if not _database_url:
-    raise RuntimeError("DATABASE_URL не задан. Скопируй .env.example в .env")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_USER = os.getenv("DB_USER", "parser")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "parser")
+DB_NAME = os.getenv("DB_NAME", "vacancies")
 
-DATABASE_URL: str = _database_url  # mypy знает: здесь уже точно str
+DATABASE_URL = (
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
+    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
 HH_QUERY = os.getenv("HH_QUERY", "продакт менеджер ИИ")
 TRUDVSEM_QUERY = os.getenv("TRUDVSEM_QUERY", "продакт менеджер")
