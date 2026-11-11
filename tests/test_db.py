@@ -26,13 +26,15 @@ def session():
 
 def test_upsert_is_idempotent(session):
     data = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    dtos = [d for d in (normalize_vacancy(w["vacancy"])
-                        for w in data["results"]["vacancies"]) if d]
+    dtos = [
+        d
+        for d in (normalize_vacancy(w["vacancy"]) for w in data["results"]["vacancies"])
+        if d
+    ]
 
     created1, updated1 = upsert_vacancies(session, dtos)
     created2, updated2 = upsert_vacancies(session, dtos)
 
     assert created1 == len(dtos) and updated1 == 0
     assert created2 == 0 and updated2 == len(dtos)
-    assert session.scalar(
-        select(func.count()).select_from(Vacancy)) == len(dtos)
+    assert session.scalar(select(func.count()).select_from(Vacancy)) == len(dtos)

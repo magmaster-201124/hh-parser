@@ -58,10 +58,16 @@ def _run_collection(source: str) -> None:
             items = fetch_hh(HH_QUERY, HH_AREA, MAX_PAGES)
         with SessionLocal() as session:
             created, updated = upsert_vacancies(session, items)
-        _set_status(source, state="done", collected=len(items),
-                    created=created, updated=updated)
-        logger.info("Сбор %s завершён: собрано %d, новых %d, обновлено %d",
-                    source, len(items), created, updated)
+        _set_status(
+            source, state="done", collected=len(items), created=created, updated=updated
+        )
+        logger.info(
+            "Сбор %s завершён: собрано %d, новых %d, обновлено %d",
+            source,
+            len(items),
+            created,
+            updated,
+        )
     except SourceUnavailableError as exc:
         logger.warning("Источник %s недоступен: %s", source, exc)
         _set_status(source, state="error", reason=str(exc))
@@ -76,8 +82,9 @@ def index() -> FileResponse:
 
 
 @app.get("/api/vacancies", response_model=list[VacancyOut])
-def list_vacancies(has_phone: bool | None = None,
-                   limit: int = 50, offset: int = 0) -> list[VacancyOut]:
+def list_vacancies(
+    has_phone: bool | None = None, limit: int = 50, offset: int = 0
+) -> list[VacancyOut]:
     limit = min(max(limit, 1), 100)
     offset = max(offset, 0)
     with SessionLocal() as session:
@@ -90,10 +97,7 @@ def list_vacancies(has_phone: bool | None = None,
         if has_phone is not None:
             stmt = stmt.where(Vacancy.has_phone.is_(has_phone))
         rows = session.scalars(stmt).all()
-        return [
-            VacancyOut.model_validate(r, from_attributes=True)
-            for r in rows
-        ]
+        return [VacancyOut.model_validate(r, from_attributes=True) for r in rows]
 
 
 @app.post("/api/collect/{source}")

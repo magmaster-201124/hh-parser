@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import String, Integer, Boolean, DateTime
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -18,17 +18,16 @@ class Vacancy(Base):
     salary_from: Mapped[int | None] = mapped_column(Integer)
     salary_to: Mapped[int | None] = mapped_column(Integer)
     currency: Mapped[str | None] = mapped_column(String(8))
-    has_phone: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False)
+    has_phone: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     phone: Mapped[str | None] = mapped_column(String(32))
     contact_name: Mapped[str | None] = mapped_column(String(256))
     raw_json: Mapped[dict | None] = mapped_column(JSONB)
-    published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True))
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )

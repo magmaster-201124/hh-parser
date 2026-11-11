@@ -67,18 +67,21 @@ def test_fetch_stops_after_total(monkeypatch):
 
         class R:
             status_code = 200
-            def raise_for_status(self): pass
+
+            def raise_for_status(self):
+                pass
 
             def json(self):
-                return {"meta": {"total": 2, "limit": 100},
-                        "results": {"vacancies": [
-                            {"vacancy": {"id": "a",
-                                         "job-name": "x",
-                                         "vac_url": "u"}},
-                            {"vacancy": {"id": "b",
-                                         "job-name": "y",
-                                         "vac_url": "u"}},
-                        ]}}
+                return {
+                    "meta": {"total": 2, "limit": 100},
+                    "results": {
+                        "vacancies": [
+                            {"vacancy": {"id": "a", "job-name": "x", "vac_url": "u"}},
+                            {"vacancy": {"id": "b", "job-name": "y", "vac_url": "u"}},
+                        ]
+                    },
+                }
+
         return R()
 
     monkeypatch.setattr("app.providers.trudvsem.requests.get", fake_get)

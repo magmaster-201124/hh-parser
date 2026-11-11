@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -9,6 +10,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VacancyDTO:
     """Нормализованная вакансия, готовая к записи в модель."""
+
     hh_id: str
     title: str
     company: str | None
@@ -33,7 +35,7 @@ def parse_dt(value: str | None) -> datetime | None:
         except ValueError:
             continue
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
         return dt
     logger.warning("Не удалось разобрать дату: %r", value)
     return None

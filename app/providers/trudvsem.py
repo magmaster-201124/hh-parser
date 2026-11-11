@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 
 import requests
@@ -42,8 +43,7 @@ def normalize_vacancy(vac: dict) -> VacancyDTO | None:
         has_phone=phone is not None,
         phone=phone,
         contact_name=(vac.get("contact_person") or "").strip() or None,
-        published_at=parse_dt(
-            vac.get("date_modify") or vac.get("creation-date")),
+        published_at=parse_dt(vac.get("date_modify") or vac.get("creation-date")),
         raw_json=vac,
     )
 
@@ -68,14 +68,18 @@ def fetch_vacancies(query: str, pages: int = 1) -> list[VacancyDTO]:
             "offset": offset,
         }
         logger.info("Запрос trudvsem: query=%r, offset=%d", query, offset)
-        resp = requests.get(BASE_URL, params=params, headers=HEADERS,
-                            timeout=REQUEST_TIMEOUT)
+        resp = requests.get(
+            BASE_URL, params=params, headers=HEADERS, timeout=REQUEST_TIMEOUT
+        )
         try:
             resp.raise_for_status()
         except requests.HTTPError:
             if total is not None:
-                logger.warning("API отдал %s на offset=%d — считаю пагинацию "
-                               "законченной", resp.status_code, offset)
+                logger.warning(
+                    "API отдал %s на offset=%d — считаю пагинацию законченной",
+                    resp.status_code,
+                    offset,
+                )
                 break
             raise  # первая страница не удалась — это уже честная ошибка
         data = resp.json()

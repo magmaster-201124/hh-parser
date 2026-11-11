@@ -1,5 +1,5 @@
-from .db import Base, engine
 from . import models  # noqa: F401 — импорт регистрирует модели
+from .db import Base, engine
 
 
 def init() -> None:

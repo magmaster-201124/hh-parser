@@ -1,5 +1,5 @@
-import requests as requests_lib
 import pytest
+import requests as requests_lib
 
 from app.providers.base import SourceUnavailableError
 from app.providers.hh import fetch_hh, normalize_hh

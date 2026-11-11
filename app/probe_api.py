@@ -1,11 +1,11 @@
 import json
+
 import requests
 
-from .config import HH_QUERY, HH_AREA
+from .config import HH_AREA, HH_QUERY
 
 BASE_URL = "https://api.hh.ru/vacancies"
-HEADERS: dict[str, str] = {
-    "User-Agent": "Resumetto-parser/1.0 (test task)"}
+HEADERS: dict[str, str] = {"User-Agent": "Resumetto-parser/1.0 (test task)"}
 params: dict[str, str] = {
     "text": HH_QUERY,
     "area": str(HH_AREA),
@@ -25,9 +25,7 @@ def probe() -> None:
 
     # верхний уровень ответа
     print("Ключи верхнего уровня:", list(payload.keys()))
-    print(f"Всего найдено: {payload.get('found')}, "
-          f"страниц: {payload.get('pages')}"
-          )
+    print(f"Всего найдено: {payload.get('found')}, страниц: {payload.get('pages')}")
 
     # структура одной вакансии
     item = payload["items"][0]

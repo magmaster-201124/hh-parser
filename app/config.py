@@ -11,8 +11,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "parser")
 DB_NAME = os.getenv("DB_NAME", "vacancies")
 
 DATABASE_URL = (
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
-    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
 HH_QUERY = os.getenv("HH_QUERY", "продакт менеджер ИИ")

@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 # Затем код
 COPY app/ ./app/
 COPY tests/ ./tests/
+RUN find . -name "*.py" -exec chmod 644 {} +
 
 EXPOSE 8000
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import logging
 
 import requests
 
-from .base import parse_dt, SourceUnavailableError, VacancyDTO
 from app.config import HH_API_TOKEN
+
+from .base import SourceUnavailableError, VacancyDTO, parse_dt
 
 BASE_URL = "https://api.hh.ru/vacancies"
 HEADERS: dict[str, str] = {"User-Agent": "Resumetto-parser/1.0 (test task)"}
@@ -33,7 +35,8 @@ def normalize_hh(item: dict) -> VacancyDTO | None:
     phone = None
     for p in contacts.get("phones") or []:
         formatted = p.get("formatted") or "".join(
-            filter(None, (p.get("city"), p.get("number"))))
+            filter(None, (p.get("city"), p.get("number")))
+        )
         if formatted:
             phone = formatted
             break
@@ -66,17 +69,19 @@ def fetch_hh(query: str, area: int, pages: int = 1) -> list[VacancyDTO]:
             "page": page,
         }
         logger.info("Запрос hh: query=%r, area=%d, page=%d", query, area, page)
-        resp = requests.get(BASE_URL, params=params, headers=_headers(),
-                            timeout=REQUEST_TIMEOUT)
+        resp = requests.get(
+            BASE_URL, params=params, headers=_headers(), timeout=REQUEST_TIMEOUT
+        )
         try:
             resp.raise_for_status()
         except requests.HTTPError:
             if resp.status_code == 403:
-                logger.warning("hh отклонил запрос(403): нет токена приложения"
-                               " или он не активен")
+                logger.warning(
+                    "hh отклонил запрос(403): нет токена приложения или он не активен"
+                )
                 raise SourceUnavailableError(
-                    "hh отклонил запрос (403): нет токена приложения "
-                    "или он не активен") from None
+                    "hh отклонил запрос (403): нет токена приложения или он не активен"
+                ) from None
             raise
         data = resp.json()
         found = data.get("found", 0)

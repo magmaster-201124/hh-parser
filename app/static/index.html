@@ -17,9 +17,10 @@
   <button onclick="collect('hh')">Собрать hh</button>
   <button onclick="loadVacancies(true)">Показать вакансии с телефоном</button>
   <div id="status"></div>
+  <p id="vacancies-count"></p>
   <table id="vacancies" hidden>
     <thead><tr>
-      <th>Должность</th><th>Компания</th><th>Регион</th>
+      <th>#</th><th>Должность</th><th>Компания</th><th>Регион</th>
       <th>Зарплата</th><th>Телефон</th><th>Контакт</th><th>Ссылка</th>
     </tr></thead>
     <tbody></tbody>
@@ -45,15 +46,17 @@
       }, 1500);
     }
 
-
     async function loadVacancies(hasPhone = false) {
       const query = hasPhone ? "?has_phone=true" : "";
       const rows = await (await fetch(`/api/vacancies${query}`)).json();
+      document.getElementById("vacancies-count").textContent =
+        `Показано записей: ${rows.length}`;
       const tbody = document.querySelector("#vacancies tbody");
       tbody.innerHTML = "";
+      let n = 1;
       for (const v of rows) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${v.title}</td><td>${v.company ?? ""}</td><td>${v.area ?? ""}</td>` +
+        tr.innerHTML = `<td>${n++}</td><td>${v.title}</td><td>${v.company ?? ""}</td><td>${v.area ?? ""}</td>` +
           `<td>${v.salary_from ?? "—"}…${v.salary_to ?? "—"} ${v.currency ?? ""}</td>` +
           `<td>${v.phone ?? ""}</td><td>${v.contact_name ?? ""}</td>` +
           `<td><a href="${v.url}">открыть</a></td>`;
