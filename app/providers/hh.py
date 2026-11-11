@@ -4,6 +4,7 @@ import logging
 
 import requests
 
+from app import oauth_hh
 from app.config import HH_API_TOKEN
 
 from .base import SourceUnavailableError, VacancyDTO, parse_dt
@@ -18,8 +19,9 @@ logger = logging.getLogger(__name__)
 
 def _headers() -> dict[str, str]:
     h = dict(HEADERS)
-    if HH_API_TOKEN:
-        h["Authorization"] = f"Bearer {HH_API_TOKEN}"
+    token = HH_API_TOKEN or oauth_hh.get_access_token()
+    if token:
+        h["Authorization"] = f"Bearer {token}"
     return h
 
 

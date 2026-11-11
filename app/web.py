@@ -10,7 +10,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from .config import HH_AREA, HH_QUERY, MAX_PAGES, TRUDVSEM_QUERY
+from .config import (
+    HH_AREA,
+    HH_QUERY,
+    MAX_PAGES,
+    TRUDVSEM_QUERY,
+)
 from .db import SessionLocal
 from .main import upsert_vacancies
 from .models import Vacancy
