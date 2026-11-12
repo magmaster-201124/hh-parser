@@ -36,6 +36,7 @@
     const PAGE_SIZE = 50;   // вакансий на странице
     let rows = [];          // текущая выборка с бэкенда
     let currentPage = 0;    // номер страницы, начиная с 0
+    let currentFilter = false;  // включён ли фильтр «только с телефоном»
 
     async function collect(source) {
       const resp = await fetch(`/api/collect/${source}`, { method: "POST" });
@@ -58,6 +59,7 @@
 
     async function loadVacancies(hasPhone = false) {
       currentPage = 0;
+      currentFilter = hasPhone;
       const query = hasPhone ? "has_phone=true&" : "";
       const resp = await fetch(`/api/vacancies?${query}limit=250`);
       rows = await resp.json();
@@ -85,6 +87,7 @@
 
       document.getElementById("vacancies").hidden = total === 0;
       document.getElementById("pager-info").textContent =
+        (currentFilter ? "Фильтр: только с телефоном — " : "") +
         `Страница ${currentPage + 1} из ${pages} — показано ${chunk.length} из ${total}`;
       document.getElementById("prev-btn").disabled = currentPage === 0;
       document.getElementById("next-btn").disabled = currentPage >= pages - 1;
