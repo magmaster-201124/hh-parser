@@ -1,0 +1,17 @@
+### Healthcheck
+GET http://localhost:8000/health
+
+### Статус сборок
+GET http://localhost:8000/api/status
+
+### Запустить сбор hh
+POST http://localhost:8000/api/collect/hh
+
+### Запустить сбор trudvsem
+POST http://localhost:8000/api/collect/trudvsem
+
+### Все вакансии, первая страница
+GET http://localhost:8000/api/vacancies?limit=50&offset=0
+
+### Вакансии с телефонами
+GET http://localhost:8000/api/vacancies?has_phone=true&limit=50

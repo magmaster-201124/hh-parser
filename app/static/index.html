@@ -16,8 +16,14 @@
   <button onclick="collect('trudvsem')">Собрать trudvsem</button>
   <button onclick="collect('hh')">Собрать hh</button>
   <button onclick="loadVacancies(true)">Показать вакансии с телефоном</button>
+  <button onclick="loadVacancies(false)">Все вакансии</button>
   <div id="status"></div>
   <p id="vacancies-count"></p>
+  <div id="pager">
+    <button id="prev-btn" onclick="changePage(-1)">← Назад</button>
+    <span id="pager-info"></span>
+    <button id="next-btn" onclick="changePage(1)">Вперёд →</button>
+  </div>
   <table id="vacancies" hidden>
     <thead><tr>
       <th>#</th><th>Должность</th><th>Компания</th><th>Регион</th>
@@ -27,6 +33,10 @@
   </table>
 
   <script>
+    const PAGE_SIZE = 50;   // вакансий на странице
+    let rows = [];          // текущая выборка с бэкенда
+    let currentPage = 0;    // номер страницы, начиная с 0
+
     async function collect(source) {
       const resp = await fetch(`/api/collect/${source}`, { method: "POST" });
       showStatus(await resp.json());
@@ -40,21 +50,31 @@
         clearInterval(timer);
         const stats = st.state === "done"
           ? `, собрано ${st.collected}, новых ${st.created}, обновлено ${st.updated}`
-        : "";
+          : "";
         showStatus(`${source}: ${st.state}${st.reason ? ` — ${st.reason}` : ""}${stats}`);
         if (st.state === "done") await loadVacancies();
       }, 1500);
     }
 
     async function loadVacancies(hasPhone = false) {
-      const query = hasPhone ? "?has_phone=true" : "";
-      const rows = await (await fetch(`/api/vacancies${query}`)).json();
-      document.getElementById("vacancies-count").textContent =
-        `Показано записей: ${rows.length}`;
+      currentPage = 0;
+      const query = hasPhone ? "has_phone=true&" : "";
+      const resp = await fetch(`/api/vacancies?${query}limit=250`);
+      rows = await resp.json();
+      renderPage();
+    }
+
+    function renderPage() {
+      const total = rows.length;
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage >= pages) currentPage = pages - 1;
+      const start = currentPage * PAGE_SIZE;
+      const chunk = rows.slice(start, start + PAGE_SIZE);
+
       const tbody = document.querySelector("#vacancies tbody");
       tbody.innerHTML = "";
-      let n = 1;
-      for (const v of rows) {
+      let n = start + 1;
+      for (const v of chunk) {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${n++}</td><td>${v.title}</td><td>${v.company ?? ""}</td><td>${v.area ?? ""}</td>` +
           `<td>${v.salary_from ?? "—"}…${v.salary_to ?? "—"} ${v.currency ?? ""}</td>` +
@@ -62,12 +82,25 @@
           `<td><a href="${v.url}">открыть</a></td>`;
         tbody.appendChild(tr);
       }
-      document.getElementById("vacancies").hidden = false;
+
+      document.getElementById("vacancies").hidden = total === 0;
+      document.getElementById("pager-info").textContent =
+        `Страница ${currentPage + 1} из ${pages} — показано ${chunk.length} из ${total}`;
+      document.getElementById("prev-btn").disabled = currentPage === 0;
+      document.getElementById("next-btn").disabled = currentPage >= pages - 1;
+    }
+
+    function changePage(delta) {
+      currentPage += delta;
+      renderPage();
     }
 
     function showStatus(text) {
-      document.getElementById("status").textContent = typeof text === "string" ? text : JSON.stringify(text);
+      document.getElementById("status").textContent =
+        typeof text === "string" ? text : JSON.stringify(text);
     }
+
+    loadVacancies();  // заполняем таблицу при открытии страницы
   </script>
 </body>
 </html>

@@ -8,7 +8,8 @@ from datetime import datetime
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from .config import (
     HH_AREA,
@@ -90,7 +91,7 @@ def index() -> FileResponse:
 def list_vacancies(
     has_phone: bool | None = None, limit: int = 50, offset: int = 0
 ) -> list[VacancyOut]:
-    limit = min(max(limit, 1), 100)
+    limit = min(max(limit, 1), 250)
     offset = max(offset, 0)
     with SessionLocal() as session:
         stmt = (
@@ -120,3 +121,13 @@ def collect(source: str, background: BackgroundTasks) -> dict:
 def status() -> dict:
     with _lock:
         return dict(_status)
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    try:
+        with SessionLocal() as session:
+            session.execute(text("SELECT 1"))
+        return {"status": "ok"}
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="db unavailable")
