@@ -4,8 +4,7 @@ import logging
 
 import requests
 
-from app import oauth_hh
-from app.config import HH_API_TOKEN
+from app import config, oauth_hh
 
 from .base import SourceUnavailableError, VacancyDTO, parse_dt
 
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def _headers() -> dict[str, str]:
     h = dict(HEADERS)
-    token = HH_API_TOKEN or oauth_hh.get_access_token()
+    token = config.HH_API_TOKEN or oauth_hh.get_access_token()
     if token:
         h["Authorization"] = f"Bearer {token}"
     return h
@@ -77,12 +76,26 @@ def fetch_hh(query: str, area: int, pages: int = 1) -> list[VacancyDTO]:
         try:
             resp.raise_for_status()
         except requests.HTTPError:
-            if resp.status_code == 403:
+            if resp.status_code in (401, 403):
+                if config.HH_API_TOKEN:
+                    logger.warning(
+                        "hh отклонил запрос (%d): токен из .env недействителен, "
+                        "сброшен из окружения. Обновите HH_API_TOKEN в .env "
+                        "(или удалите строку, чтобы получать токен автоматически). "
+                        "Следующий запуск сбора получит новый токен приложения",
+                        resp.status_code,
+                    )
+                    config.HH_API_TOKEN = ""
+                    raise SourceUnavailableError(
+                        "hh отклонил запрос: токен из .env недействителен и сброшен — "
+                        "запустите сбор ещё раз, будет получен новый токен приложения"
+                    ) from None
                 logger.warning(
-                    "hh отклонил запрос(403): нет токена приложения или он не активен"
+                    "hh отклонил запрос (%d): токен приложения не принят",
+                    resp.status_code,
                 )
                 raise SourceUnavailableError(
-                    "hh отклонил запрос (403): нет токена приложения или он не активен"
+                    "hh отклонил запрос: токен приложения не принят"
                 ) from None
             raise
         data = resp.json()
